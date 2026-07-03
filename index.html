@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>俺くんペースメーカーβ版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14152A;
+    --bg-panel: #1D1F3D;
+    --bg-panel-2: #262850;
+    --bg-panel-3: #2E3162;
+    --accent-pink: #FF5C8A;
+    --accent-yellow: #FFCB3D;
+    --accent-cyan: #43D9C8;
+    --accent-purple: #9B7BFF;
+    --text-main: #F4F2FF;
+    --text-dim: #9491B8;
+    --border: rgba(255,255,255,0.09);
+    --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(155,123,255,0.18), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(67,217,200,0.14), transparent 40%),
+      var(--bg);
+    color:var(--text-main);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .display{font-family:'Yusei Magic', 'Zen Kaku Gothic New', sans-serif;}
+  ::selection{background:var(--accent-pink); color:#1A1B2E;}
+
+  header{ padding:26px 20px 14px; text-align:center; position:relative; }
+  .reset-corner{ position:absolute; top:18px; right:14px; font-size:11px; padding:7px 12px; }
+  .logo{
+    font-size:clamp(19px,5vw,30px); letter-spacing:1px;
+    background:linear-gradient(90deg,var(--accent-pink),var(--accent-yellow) 45%,var(--accent-cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; margin:0;
+  }
+  .tagline{color:var(--text-dim); font-size:12px; margin-top:4px;}
+
+  nav.tabs{
+    display:flex; justify-content:center; gap:6px; margin:18px auto 0; max-width:420px;
+    padding:6px; background:var(--bg-panel); border-radius:100px; border:1px solid var(--border);
+  }
+  nav.tabs button{
+    flex:1; border:none; background:transparent; color:var(--text-dim); font-family:inherit;
+    font-weight:700; font-size:13px; padding:10px 6px; border-radius:100px; cursor:pointer; transition:all .25s;
+  }
+  nav.tabs button.active{
+    background:linear-gradient(90deg,var(--accent-pink),var(--accent-purple)); color:#fff;
+    box-shadow:0 4px 14px rgba(255,92,138,.35);
+  }
+
+  main{max-width:760px; margin:0 auto; padding:22px 16px;}
+  section{display:none;}
+  section.active{display:block; animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .panel{ background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:18px; }
+  h2.section-title{ font-family:'Yusei Magic',sans-serif; font-size:17px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent-cyan);display:inline-block;}
+
+  select, input[type=text], input[type=number], input[type=date]{
+    background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text-main);
+    padding:11px 13px; border-radius:12px; font-family:inherit; font-size:14px; width:100%;
+    color-scheme: dark;
+  }
+  select:focus, input:focus{outline:2px solid var(--accent-cyan);}
+  label{font-size:12px; color:var(--text-dim); display:block; margin-bottom:6px; font-weight:700;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+  .field-full{margin-bottom:14px;}
+
+  .btn{ border:none; border-radius:100px; font-family:inherit; font-weight:700; font-size:14px; padding:12px 20px; cursor:pointer; transition:transform .15s, box-shadow .15s, opacity .15s; }
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:linear-gradient(90deg,var(--accent-pink),var(--accent-purple)); color:#fff; box-shadow:0 6px 18px rgba(255,92,138,.3);}
+  .btn-secondary{background:var(--bg-panel-3); color:var(--text-main); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--accent-cyan); border:1px solid rgba(67,217,200,.4); padding:8px 14px; font-size:12px;}
+  .btn-danger{background:transparent; color:var(--accent-pink); border:1px solid rgba(255,92,138,.4); padding:8px 14px; font-size:12px;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  .chip-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
+  .day-chip{
+    background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text-dim);
+    border-radius:12px; padding:8px 10px; font-size:12px; cursor:pointer; text-align:center; min-width:64px; transition:all .15s;
+  }
+  .day-chip .dnum{display:block; font-weight:700; font-size:13px; color:var(--text-main);}
+  .day-chip.on{background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple)); color:#0e0f22; border-color:transparent;}
+  .day-chip.on .dnum{color:#0e0f22;}
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:18px; }
+  .stat-card{ background:var(--bg-panel-2); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; }
+  .stat-card .label{font-size:11px; color:var(--text-dim); margin-bottom:6px;}
+  .stat-card .value{font-size:18px; font-weight:900; font-family:'Yusei Magic',sans-serif;}
+  .stat-card.pink .value{color:var(--accent-pink);}
+  .stat-card.cyan .value{color:var(--accent-cyan);}
+  .stat-card.yellow .value{color:var(--accent-yellow);}
+  .stat-card.purple .value{color:var(--accent-purple);}
+
+  .chart-wrap{ background:var(--bg-panel-2); border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:18px; }
+  .chart-legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-dim); padding:0 6px 8px; }
+  .chart-legend .chip{display:inline-flex; align-items:center; gap:6px;}
+  .chart-legend .sw{width:14px; height:3px; border-radius:2px; display:inline-block;}
+
+  .log-form{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px;}
+  .log-form > div{flex:1; min-width:140px;}
+  .log-form button{white-space:nowrap;}
+
+  .log-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .log-table th{ text-align:left; color:var(--text-dim); font-weight:700; font-size:11px; padding:8px 6px; border-bottom:1px solid var(--border); }
+  .log-table td{ padding:9px 6px; border-bottom:1px solid var(--border); }
+  .log-table .diff-plus{color:var(--accent-cyan); font-weight:700;}
+  .log-table .diff-minus{color:var(--accent-pink); font-weight:700;}
+  .log-table .del-log{background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:15px;}
+  .log-table .del-log:hover{color:var(--accent-pink);}
+
+  .empty-hint{color:var(--text-dim); font-size:13px; text-align:center; padding:30px 10px;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-panel-3); color:var(--text-main); padding:12px 20px; border-radius:100px;
+    border:1px solid var(--border); font-size:13px; font-weight:700; opacity:0; pointer-events:none;
+    transition:all .3s; z-index:999; box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(10,10,20,.7); display:none; align-items:center; justify-content:center; z-index:900; padding:16px; }
+  .modal-backdrop.show{display:flex;}
+  .modal{ background:var(--bg-panel); border:1px solid var(--border); border-radius:18px; padding:22px; max-width:340px; width:100%; text-align:center; }
+  .modal p{color:var(--text-dim); font-size:13px;}
+  .modal .modal-actions{display:flex; gap:10px; margin-top:16px;}
+  .modal .modal-actions button{flex:1;}
+
+  .hint-box{font-size:12px; color:var(--text-dim); background:var(--bg-panel-2); border:1px dashed var(--border); border-radius:12px; padding:10px 12px; margin-top:6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="btn btn-danger reset-corner" id="resetBtn">🗑 新しい企画にする</button>
+  <p class="logo display">俺くんペースメーカーβ版</p>
+  <p class="tagline">「戦略機」で出したボーダー目安を貼り付けて、期間中のペース配分と実績を管理。端末保存型。</p>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="setup">🎯 イベント設定</button>
+    <button class="tab-btn" data-tab="dashboard">📈 ペース＆実績</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===== SETUP TAB ===== -->
+  <section id="tab-setup" class="active">
+    <div class="panel">
+      <h2 class="section-title"><span class="dot" style="background:var(--accent-yellow);"></span>イベント情報</h2>
+
+      <div class="field-full">
+        <label>イベント名</label>
+        <input type="text" id="eventName" placeholder="例：7月度SS+ボーダー耐久">
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label>開始日</label>
+          <input type="date" id="startDate">
+        </div>
+        <div>
+          <label>終了日</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label>開始時点のスコア</label>
+          <input type="number" id="startScore" placeholder="0" min="0">
+        </div>
+        <div>
+          <label>目標スコア（戦略機のボーダー目安）</label>
+          <input type="number" id="targetScore" placeholder="例：300000" min="0">
+        </div>
+      </div>
+      <p class="hint-box">「俺くんの戦略機」で計算したボーダーの数値をそのままここに貼り付ければOKです。</p>
+
+      <div style="margin-top:18px;">
+        <label>配信予定日（タップでON/OFF。OFFの日はペース計算から除外されます）</label>
+        <div class="chip-grid" id="dayChips"></div>
+      </div>
+
+      <button class="btn btn-primary" id="saveConfigBtn" style="width:100%; margin-top:20px;">この内容で保存する</button>
+    </div>
+  </section>
+
+  <!-- ===== DASHBOARD TAB ===== -->
+  <section id="tab-dashboard">
+    <div id="noConfigHint" class="panel" style="display:none;">
+      <p class="empty-hint">まだイベントが設定されていません。「イベント設定」タブから開始日・終了日・目標スコアを登録してください。</p>
+    </div>
+
+    <div id="dashboardContent" style="display:none;">
+      <div class="panel">
+        <h2 class="section-title" id="dashTitle" style="margin:0 0 16px;"><span class="dot"></span></h2>
+        <div class="stat-grid" id="statGrid"></div>
+
+        <div class="chart-wrap">
+          <div class="chart-legend">
+            <span class="chip"><span class="sw" style="background:var(--accent-purple);"></span>予定ペース</span>
+            <span class="chip"><span class="sw" style="background:var(--accent-cyan);"></span>実績</span>
+            <span class="chip"><span class="sw" style="background:var(--accent-yellow); height:0; border-top:2px dashed var(--accent-yellow);"></span>目標ライン</span>
+          </div>
+          <div id="chartHolder"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title"><span class="dot" style="background:var(--accent-cyan);"></span>実績を記録する</h2>
+        <div class="log-form">
+          <div>
+            <label>日付</label>
+            <input type="date" id="logDate">
+          </div>
+          <div>
+            <label>その時点の累計スコア</label>
+            <input type="number" id="logScore" placeholder="例：45000" min="0">
+          </div>
+          <button class="btn btn-primary" id="addLogBtn">記録する</button>
+        </div>
+
+        <table class="log-table" id="logTable">
+          <thead>
+            <tr><th>日付</th><th>累計スコア</th><th>予定との差</th><th></th></tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+        <p class="empty-hint" id="noLogHint" style="display:none;">まだ記録がありません。今日のスコアを入力してみましょう。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal">
+    <p class="display" style="color:var(--text-main); font-size:16px; margin-bottom:6px;" id="confirmTitle">確認</p>
+    <p id="confirmBody">本当によろしいですか？</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirmCancel">キャンセル</button>
+      <button class="btn btn-danger" id="confirmOk" style="background:var(--accent-pink); color:#fff;">実行する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let state = {
+    config: null,      // {name,start,end,startScore,targetScore,streamDays:{iso:true}}
+    logs: {}           // { iso: cumulativeScore }
+  };
+  let tempStreamDays = {};
+  let confirmCb = null;
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(n){ return Math.round(n).toLocaleString('ja-JP'); }
+
+  // ---------- date helpers ----------
+  function dateRange(s, e){
+    const res = [];
+    if(!s || !e) return res;
+    let d = new Date(s+'T00:00:00Z');
+    const end = new Date(e+'T00:00:00Z');
+    if(isNaN(d) || isNaN(end) || d>end) return res;
+    while(d<=end){ res.push(d.toISOString().slice(0,10)); d.setUTCDate(d.getUTCDate()+1); }
+    return res;
+  }
+  function fmtShort(iso){
+    const d = new Date(iso+'T00:00:00Z');
+    return `${d.getUTCMonth()+1}/${d.getUTCDate()}`;
+  }
+
+  // ---------- storage ----------
+  async function loadState(){
+    try{ const c = await window.storage.get('paceConfig', false); if(c) state.config = JSON.parse(c.value); }catch(e){}
+    try{ const l = await window.storage.get('paceLogs', false); if(l) state.logs = JSON.parse(l.value); }catch(e){}
+  }
+  async function saveConfig(){ try{ await window.storage.set('paceConfig', JSON.stringify(state.config), false); }catch(e){ showToast('保存に失敗しました'); } }
+  async function saveLogs(){ try{ await window.storage.set('paceLogs', JSON.stringify(state.logs), false); }catch(e){ showToast('保存に失敗しました'); } }
+
+  // ---------- toast ----------
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  // ---------- confirm modal ----------
+  function confirmAction(title, body, onOk, okLabel){
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    document.getElementById('confirmOk').textContent = okLabel || '実行する';
+    document.getElementById('confirmModal').classList.add('show');
+    confirmCb = onOk;
+  }
+  document.getElementById('confirmCancel').onclick = ()=>{ document.getElementById('confirmModal').classList.remove('show'); confirmCb=null; };
+  document.getElementById('confirmOk').onclick = ()=>{ document.getElementById('confirmModal').classList.remove('show'); if(confirmCb) confirmCb(); confirmCb=null; };
+
+  document.getElementById('resetBtn').onclick = ()=>{
+    confirmAction(
+      '新しい企画にする',
+      'イベント設定と、これまでの実績記録を全て削除します。次の企画をまっさらな状態から始められます。この操作は取り消せません。',
+      async ()=>{
+        state.config = null; state.logs = {};
+        await Promise.all([
+          window.storage.set('paceConfig', JSON.stringify(null), false).catch(()=>{}),
+          window.storage.set('paceLogs', JSON.stringify({}), false).catch(()=>{})
+        ]);
+        document.getElementById('eventName').value='';
+        document.getElementById('startDate').value='';
+        document.getElementById('endDate').value='';
+        document.getElementById('startScore').value='';
+        document.getElementById('targetScore').value='';
+        tempStreamDays = {};
+        renderDayChips();
+        renderDashboard();
+        showToast('リセットしました');
+      },
+      'リセットする'
+    );
+  };
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('main > section').forEach(s=>s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'dashboard') renderDashboard();
+    };
+  });
+
+  // ---------- setup tab ----------
+  function renderDayChips(){
+    const s = document.getElementById('startDate').value;
+    const e = document.getElementById('endDate').value;
+    const dates = dateRange(s, e);
+    const holder = document.getElementById('dayChips');
+    if(dates.length === 0){
+      holder.innerHTML = '<p class="empty-hint" style="padding:10px 0;">開始日と終了日を入力すると、日付ごとにON/OFFを選べます。</p>';
+      return;
+    }
+    const prev = (state.config && state.config.streamDays) || {};
+    holder.innerHTML = '';
+    dates.forEach(iso=>{
+      const on = (iso in tempStreamDays) ? tempStreamDays[iso] : (iso in prev ? prev[iso] : true);
+      tempStreamDays[iso] = on;
+      const chip = document.createElement('div');
+      chip.className = 'day-chip' + (on ? ' on' : '');
+      const d = new Date(iso+'T00:00:00Z');
+      const wd = ['日','月','火','水','木','金','土'][d.getUTCDay()];
+      chip.innerHTML = `<span class="dnum">${d.getUTCMonth()+1}/${d.getUTCDate()}</span>(${wd})`;
+      chip.onclick = ()=>{ tempStreamDays[iso] = !tempStreamDays[iso]; chip.classList.toggle('on'); };
+      holder.appendChild(chip);
+    });
+    // clear stale keys outside range
+    Object.keys(tempStreamDays).forEach(k=>{ if(!dates.includes(k)) delete tempStreamDays[k]; });
+  }
+  document.getElementById('startDate').addEventListener('change', renderDayChips);
+  document.getElementById('endDate').addEventListener('change', renderDayChips);
+
+  document.getElementById('saveConfigBtn').onclick = async ()=>{
+    const name = document.getElementById('eventName').value.trim() || '無題のイベント';
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    const startScore = Number(document.getElementById('startScore').value) || 0;
+    const targetScore = Number(document.getElementById('targetScore').value) || 0;
+
+    if(!start || !end){ showToast('開始日と終了日を入力してください'); return; }
+    if(start > end){ showToast('終了日は開始日より後にしてください'); return; }
+    if(targetScore <= startScore){ showToast('目標スコアは開始時点のスコアより大きくしてください'); return; }
+
+    renderDayChips(); // ensure tempStreamDays reflects current range
+    state.config = { name, start, end, startScore, targetScore, streamDays: {...tempStreamDays} };
+    await saveConfig();
+    showToast('保存しました');
+    document.querySelector('.tab-btn[data-tab="dashboard"]').click();
+  };
+
+  // ---------- dashboard tab ----------
+  function computeStats(){
+    const c = state.config;
+    const dates = dateRange(c.start, c.end);
+    const streamDates = dates.filter(d=>c.streamDays[d]);
+    const totalStreamDays = streamDates.length || 1;
+    const increment = (c.targetScore - c.startScore) / totalStreamDays;
+
+    const plannedMap = {};
+    let running = c.startScore;
+    dates.forEach(d=>{
+      if(c.streamDays[d]) running += increment;
+      plannedMap[d] = running;
+    });
+
+    const loggedDates = Object.keys(state.logs).filter(d=>dates.includes(d)).sort();
+    const lastLogDate = loggedDates.length ? loggedDates[loggedDates.length-1] : null;
+    const actualLatest = lastLogDate ? state.logs[lastLogDate] : c.startScore;
+
+    const plannedAtLast = lastLogDate ? plannedMap[lastLogDate] : c.startScore;
+    const aheadBehind = actualLatest - plannedAtLast;
+
+    const remainingStreamDates = streamDates.filter(d=> !lastLogDate || d > lastLogDate);
+    const remainingScore = Math.max(0, c.targetScore - actualLatest);
+    const requiredPace = remainingStreamDates.length > 0 ? remainingScore / remainingStreamDates.length : (remainingScore>0? remainingScore : 0);
+
+    const progressPct = c.targetScore > c.startScore
+      ? Math.max(0, Math.min(100, ((actualLatest - c.startScore) / (c.targetScore - c.startScore)) * 100))
+      : 100;
+
+    return { dates, streamDates, plannedMap, loggedDates, lastLogDate, actualLatest, aheadBehind, remainingStreamDates, remainingScore, requiredPace, progressPct, increment };
+  }
+
+  function renderStatGrid(stats){
+    const c = state.config;
+    const grid = document.getElementById('statGrid');
+    const aheadLabel = stats.aheadBehind >= 0 ? `+${fmt(stats.aheadBehind)}（貯金）` : `${fmt(stats.aheadBehind)}（遅れ）`;
+    grid.innerHTML = `
+      <div class="stat-card"><div class="label">目標スコア</div><div class="value">${fmt(c.targetScore)}</div></div>
+      <div class="stat-card cyan"><div class="label">現在の実績</div><div class="value">${fmt(stats.actualLatest)}</div></div>
+      <div class="stat-card pink"><div class="label">残り必要スコア</div><div class="value">${fmt(stats.remainingScore)}</div></div>
+      <div class="stat-card"><div class="label">残り配信日数</div><div class="value">${stats.remainingStreamDates.length}日</div></div>
+      <div class="stat-card purple"><div class="label">今からの必要ペース/日</div><div class="value">${fmt(stats.requiredPace)}</div></div>
+      <div class="stat-card yellow"><div class="label">達成率</div><div class="value">${stats.progressPct.toFixed(1)}%</div></div>
+      <div class="stat-card ${stats.aheadBehind>=0?'cyan':'pink'}"><div class="label">予定との差（最終記録時点）</div><div class="value" style="font-size:14px;">${aheadLabel}</div></div>
+    `;
+  }
+
+  function renderChart(stats){
+    const c = state.config;
+    const dates = stats.dates;
+    const holder = document.getElementById('chartHolder');
+    if(dates.length < 2){ holder.innerHTML = '<p class="empty-hint">日数が短すぎてグラフを表示できません。</p>'; return; }
+
+    const W = 680, H = 240, padL = 46, padR = 14, padT = 14, padB = 26;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+
+    const maxVal = Math.max(c.targetScore, stats.actualLatest, ...dates.map(d=>stats.plannedMap[d])) * 1.08 || 1;
+
+    function x(i){ return padL + (i/(dates.length-1)) * innerW; }
+    function y(v){ return padT + innerH - (Math.max(0,v)/maxVal) * innerH; }
+
+    const plannedPts = dates.map((d,i)=> `${x(i)},${y(stats.plannedMap[d])}`).join(' ');
+
+    const loggedSorted = stats.loggedDates;
+    const actualPts = loggedSorted.map(d=>{
+      const i = dates.indexOf(d);
+      return `${x(i)},${y(state.logs[d])}`;
+    }).join(' ');
+
+    const targetY = y(c.targetScore);
+
+    // sparse x labels: first, mid, last
+    const labelIdxs = [0, Math.floor((dates.length-1)/2), dates.length-1];
+    let xLabels = '';
+    labelIdxs.forEach(i=>{
+      xLabels += `<text x="${x(i)}" y="${H-6}" font-size="10" fill="#9491B8" text-anchor="middle">${fmtShort(dates[i])}</text>`;
+    });
+
+    let actualDots = '';
+    loggedSorted.forEach(d=>{
+      const i = dates.indexOf(d);
+      actualDots += `<circle cx="${x(i)}" cy="${y(state.logs[d])}" r="3.5" fill="#43D9C8" stroke="#14152A" stroke-width="1.5"/>`;
+    });
+
+    const svg = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
+        <line x1="${padL}" y1="${targetY}" x2="${W-padR}" y2="${targetY}" stroke="#FFCB3D" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.8"/>
+        <text x="${W-padR}" y="${targetY-6}" font-size="10" fill="#FFCB3D" text-anchor="end">目標 ${fmt(c.targetScore)}</text>
+        <polyline points="${plannedPts}" fill="none" stroke="#9B7BFF" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.9"/>
+        ${actualPts ? `<polyline points="${actualPts}" fill="none" stroke="#43D9C8" stroke-width="3"/>` : ''}
+        ${actualDots}
+        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#3A3D78" stroke-width="1"/>
+        <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#3A3D78" stroke-width="1"/>
+        ${xLabels}
+      </svg>
+    `;
+    holder.innerHTML = svg;
+  }
+
+  function renderLogTable(stats){
+    const body = document.getElementById('logTableBody');
+    const dates = Object.keys(state.logs).filter(d=>stats.dates.includes(d)).sort();
+    document.getElementById('noLogHint').style.display = dates.length ? 'none' : 'block';
+    body.innerHTML = '';
+    dates.forEach(d=>{
+      const val = state.logs[d];
+      const planned = stats.plannedMap[d];
+      const diff = val - planned;
+      const diffClass = diff >= 0 ? 'diff-plus' : 'diff-minus';
+      const diffLabel = diff >= 0 ? `+${fmt(diff)}` : `${fmt(diff)}`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fmtShort(d)}</td>
+        <td>${fmt(val)}</td>
+        <td class="${diffClass}">${diffLabel}</td>
+        <td><button class="del-log" title="削除">✕</button></td>
+      `;
+      tr.querySelector('.del-log').onclick = async ()=>{
+        delete state.logs[d];
+        await saveLogs();
+        renderDashboard();
+      };
+      body.appendChild(tr);
+    });
+  }
+
+  function renderDashboard(){
+    const has = !!state.config;
+    document.getElementById('noConfigHint').style.display = has ? 'none' : 'block';
+    document.getElementById('dashboardContent').style.display = has ? 'block' : 'none';
+    if(!has) return;
+
+    const c = state.config;
+    document.getElementById('dashTitle').innerHTML = `<span class="dot"></span>${escapeHtml(c.name)}（${fmtShort(c.start)}〜${fmtShort(c.end)}）`;
+
+    const stats = computeStats();
+    renderStatGrid(stats);
+    renderChart(stats);
+    renderLogTable(stats);
+
+    // constrain log date input to event range
+    const logDateInput = document.getElementById('logDate');
+    logDateInput.min = c.start; logDateInput.max = c.end;
+    if(!logDateInput.value) logDateInput.value = c.end < todayISO() ? c.end : (c.start > todayISO() ? c.start : todayISO());
+  }
+
+  function todayISO(){
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  }
+
+  document.getElementById('addLogBtn').onclick = async ()=>{
+    if(!state.config){ showToast('先にイベントを設定してください'); return; }
+    const d = document.getElementById('logDate').value;
+    const v = document.getElementById('logScore').value;
+    if(!d){ showToast('日付を選択してください'); return; }
+    if(v === '' || Number(v) < 0){ showToast('累計スコアを入力してください'); return; }
+    if(d < state.config.start || d > state.config.end){ showToast('イベント期間内の日付を選んでください'); return; }
+    state.logs[d] = Number(v);
+    await saveLogs();
+    document.getElementById('logScore').value = '';
+    renderDashboard();
+    showToast('記録しました');
+  };
+
+  // ---------- init ----------
+  (async function init(){
+    await loadState();
+    if(state.config){
+      document.getElementById('eventName').value = state.config.name;
+      document.getElementById('startDate').value = state.config.start;
+      document.getElementById('endDate').value = state.config.end;
+      document.getElementById('startScore').value = state.config.startScore;
+      document.getElementById('targetScore').value = state.config.targetScore;
+    }
+    renderDayChips();
+    renderDashboard();
+  })();
+
+})();
+</script>
+</body>
+</html>
