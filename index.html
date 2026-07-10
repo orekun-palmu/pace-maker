@@ -156,6 +156,34 @@
 
   <!-- ===== SETUP TAB ===== -->
   <section id="tab-setup" class="active">
+    <!-- 追加：登録済みイベントの簡単選択 -->
+    <div class="panel" style="border: 1px solid var(--accent-pink);">
+      <h2 class="section-title"><span class="dot" style="background:var(--accent-pink);"></span>開催予定のイベントをかんたん登録</h2>
+      <div class="field-full">
+        <label>イベントを選択してランクを選ぶだけで自動入力されます</label>
+        <select id="presetEventSelect">
+          <option value="">-- イベントを選択 --</option>
+          <option value="beril_coca">【Beril】べるるコカコーラ (2026/07/07 〜 07/13)</option>
+        </select>
+      </div>
+      <div class="field-full" id="presetRankWrapper" style="display:none;">
+        <label>目指すランクを選択</label>
+        <select id="presetRankSelect">
+          <option value="">-- ランクを選択 --</option>
+          <option value="800000">S~SSランク (800,000スコア)</option>
+          <option value="550000">A5ランク (550,000スコア)</option>
+          <option value="450000">A4ランク (450,000スコア)</option>
+          <option value="300000">A2~A3ランク (300,000スコア)</option>
+          <option value="230000">A1ランク (230,000スコア)</option>
+          <option value="100000">B2~B3ランク (100,000スコア)</option>
+          <option value="70000">B1ランク (70,000スコア)</option>
+          <option value="65000">C3ランク (65,000スコア)</option>
+          <option value="32000">C2ランク (32,000スコア)</option>
+          <option value="13000">D~C1ランク (13,000スコア)</option>
+        </select>
+      </div>
+    </div>
+
     <div class="panel">
       <h2 class="section-title"><span class="dot" style="background:var(--accent-yellow);"></span>イベント情報</h2>
 
@@ -327,6 +355,9 @@
         document.getElementById('endDate').value='';
         document.getElementById('startScore').value='';
         document.getElementById('targetScore').value='';
+        document.getElementById('presetEventSelect').value='';
+        document.getElementById('presetRankSelect').value='';
+        document.getElementById('presetRankWrapper').style.display = 'none';
         tempStreamDays = {};
         renderDayChips();
         renderDashboard();
@@ -345,6 +376,36 @@
       document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
       if(btn.dataset.tab === 'dashboard') renderDashboard();
     };
+  });
+
+  // ---------- preset event sync ----------
+  document.getElementById('presetEventSelect').addEventListener('change', (e)=>{
+    const wrapper = document.getElementById('presetRankWrapper');
+    if(e.target.value === 'beril_coca'){
+      wrapper.style.display = 'block';
+    } else {
+      wrapper.style.display = 'none';
+      document.getElementById('presetRankSelect').value = '';
+    }
+  });
+
+  document.getElementById('presetRankSelect').addEventListener('change', (e)=>{
+    const score = e.target.value;
+    if(!score) return;
+
+    document.getElementById('eventName').value = '【Beril】べるるコカコーラ';
+    document.getElementById('startDate').value = '2026-07-07';
+    document.getElementById('endDate').value = '2026-07-13';
+    document.getElementById('startScore').value = 0;
+    document.getElementById('targetScore').value = score;
+
+    // デフォルトで全7日間をONにする
+    const dates = dateRange('2026-07-07', '2026-07-13');
+    tempStreamDays = {};
+    dates.forEach(iso => { tempStreamDays[iso] = true; });
+
+    renderDayChips();
+    showToast('イベント情報を自動入力しました！');
   });
 
   // ---------- setup tab ----------
@@ -555,6 +616,30 @@
     return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
   }
 
+  // 変更：日付の自動進めロジック
+  function advanceLogDate(currentIso) {
+    if (!state.config) return;
+    const c = state.config;
+    const dates = dateRange(c.start, c.end);
+    
+    // 現在入力された日の「次の日」以降のリストを作る
+    const currentIndex = dates.indexOf(currentIso);
+    if (currentIndex === -1 || currentIndex === dates.length - 1) return; // 最終日ならそのまま
+    
+    const remainingDates = dates.slice(currentIndex + 1);
+    
+    // 「次の配信予定日」を探す
+    const nextStreamDate = remainingDates.find(d => c.streamDays[d] === true);
+    
+    const logDateInput = document.getElementById('logDate');
+    if (nextStreamDate) {
+      logDateInput.value = nextStreamDate;
+    } else {
+      // 次の配信日がない場合は、単純に翌日にする
+      logDateInput.value = remainingDates[0];
+    }
+  }
+
   document.getElementById('addLogBtn').onclick = async ()=>{
     if(!state.config){ showToast('先にイベントを設定してください'); return; }
     const d = document.getElementById('logDate').value;
@@ -565,6 +650,10 @@
     state.logs[d] = Number(v);
     await saveLogs();
     document.getElementById('logScore').value = '';
+    
+    // 記録が成功したら日付を自動で進める
+    advanceLogDate(d);
+    
     renderDashboard();
     showToast('記録しました');
   };
