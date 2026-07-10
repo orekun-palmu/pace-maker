@@ -225,19 +225,20 @@
             <input type="date" id="logDate">
           </div>
           <div>
-            <label>その時点の累計スコア</label>
-            <input type="number" id="logScore" placeholder="例：45000" min="0">
+            <label>その日に獲得したスコア</label>
+            <input type="number" id="logScore" placeholder="例：4500" min="0">
           </div>
           <button class="btn btn-primary" id="addLogBtn">記録する</button>
         </div>
+        <p class="hint-box">累計は自動で計算されます。その日に獲得した分だけを入力してください（同じ日付で再登録すると、その日の分だけ上書きされます）。</p>
 
         <table class="log-table" id="logTable">
           <thead>
-            <tr><th>日付</th><th>累計スコア</th><th>予定との差</th><th></th></tr>
+            <tr><th>日付</th><th>獲得スコア</th><th>累計スコア</th><th>予定との差</th><th></th></tr>
           </thead>
           <tbody id="logTableBody"></tbody>
         </table>
-        <p class="empty-hint" id="noLogHint" style="display:none;">まだ記録がありません。今日のスコアを入力してみましょう。</p>
+        <p class="empty-hint" id="noLogHint" style="display:none;">まだ記録がありません。今日獲得したスコアを入力してみましょう。</p>
       </div>
     </div>
   </section>
@@ -409,8 +410,14 @@
     });
 
     const loggedDates = Object.keys(state.logs).filter(d=>dates.includes(d)).sort();
+    const cumulativeMap = {};
+    let cum = c.startScore;
+    loggedDates.forEach(d=>{
+      cum += Number(state.logs[d]) || 0;
+      cumulativeMap[d] = cum;
+    });
     const lastLogDate = loggedDates.length ? loggedDates[loggedDates.length-1] : null;
-    const actualLatest = lastLogDate ? state.logs[lastLogDate] : c.startScore;
+    const actualLatest = lastLogDate ? cumulativeMap[lastLogDate] : c.startScore;
 
     const plannedAtLast = lastLogDate ? plannedMap[lastLogDate] : c.startScore;
     const aheadBehind = actualLatest - plannedAtLast;
@@ -423,7 +430,7 @@
       ? Math.max(0, Math.min(100, ((actualLatest - c.startScore) / (c.targetScore - c.startScore)) * 100))
       : 100;
 
-    return { dates, streamDates, plannedMap, loggedDates, lastLogDate, actualLatest, aheadBehind, remainingStreamDates, remainingScore, requiredPace, progressPct, increment };
+    return { dates, streamDates, plannedMap, loggedDates, lastLogDate, actualLatest, aheadBehind, remainingStreamDates, remainingScore, requiredPace, progressPct, increment, cumulativeMap };
   }
 
   function renderStatGrid(stats){
@@ -450,7 +457,8 @@
     const W = 680, H = 240, padL = 46, padR = 14, padT = 14, padB = 26;
     const innerW = W - padL - padR, innerH = H - padT - padB;
 
-    const maxVal = Math.max(c.targetScore, stats.actualLatest, ...dates.map(d=>stats.plannedMap[d])) * 1.08 || 1;
+    const cumVals = Object.values(stats.cumulativeMap);
+    const maxVal = Math.max(c.targetScore, stats.actualLatest, ...dates.map(d=>stats.plannedMap[d]), ...cumVals) * 1.08 || 1;
 
     function x(i){ return padL + (i/(dates.length-1)) * innerW; }
     function y(v){ return padT + innerH - (Math.max(0,v)/maxVal) * innerH; }
@@ -460,7 +468,7 @@
     const loggedSorted = stats.loggedDates;
     const actualPts = loggedSorted.map(d=>{
       const i = dates.indexOf(d);
-      return `${x(i)},${y(state.logs[d])}`;
+      return `${x(i)},${y(stats.cumulativeMap[d])}`;
     }).join(' ');
 
     const targetY = y(c.targetScore);
@@ -475,7 +483,7 @@
     let actualDots = '';
     loggedSorted.forEach(d=>{
       const i = dates.indexOf(d);
-      actualDots += `<circle cx="${x(i)}" cy="${y(state.logs[d])}" r="3.5" fill="#43D9C8" stroke="#14152A" stroke-width="1.5"/>`;
+      actualDots += `<circle cx="${x(i)}" cy="${y(stats.cumulativeMap[d])}" r="3.5" fill="#43D9C8" stroke="#14152A" stroke-width="1.5"/>`;
     });
 
     const svg = `
@@ -500,14 +508,16 @@
     body.innerHTML = '';
     dates.forEach(d=>{
       const val = state.logs[d];
+      const cum = stats.cumulativeMap[d];
       const planned = stats.plannedMap[d];
-      const diff = val - planned;
+      const diff = cum - planned;
       const diffClass = diff >= 0 ? 'diff-plus' : 'diff-minus';
       const diffLabel = diff >= 0 ? `+${fmt(diff)}` : `${fmt(diff)}`;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${fmtShort(d)}</td>
         <td>${fmt(val)}</td>
+        <td>${fmt(cum)}</td>
         <td class="${diffClass}">${diffLabel}</td>
         <td><button class="del-log" title="削除">✕</button></td>
       `;
@@ -550,7 +560,7 @@
     const d = document.getElementById('logDate').value;
     const v = document.getElementById('logScore').value;
     if(!d){ showToast('日付を選択してください'); return; }
-    if(v === '' || Number(v) < 0){ showToast('累計スコアを入力してください'); return; }
+    if(v === '' || Number(v) < 0){ showToast('獲得スコアを入力してください'); return; }
     if(d < state.config.start || d > state.config.end){ showToast('イベント期間内の日付を選んでください'); return; }
     state.logs[d] = Number(v);
     await saveLogs();
@@ -572,7 +582,7 @@
     renderDayChips();
     renderDashboard();
   })();
- 
+
 })();
 </script>
 </body>
