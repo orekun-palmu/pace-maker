@@ -143,7 +143,7 @@
 <body>
 
 <header>
-  <button class="btn btn-danger reset-corner" id="resetBtn">🗑 新しい企画にする</button>
+  <button class="btn btn-danger reset-corner" id="resetBtn">🗑 削除する</button>
   <p class="logo display">俺くんペースメーカーβ版</p>
   <p class="tagline">「戦略機」で出したボーダー目安を貼り付けて、期間中のペース配分と実績を管理。端末保存型。</p>
   <nav class="tabs">
@@ -164,22 +164,13 @@
         <select id="presetEventSelect">
           <option value="">-- イベントを選択 --</option>
           <option value="beril_coca">【Beril】べるるコカコーラ (2026/07/07 〜 07/13)</option>
+          <option value="eki_koukoku">駅広告掲載権獲得イベント2026 (2026/07/21 〜 07/27)</option>
         </select>
       </div>
       <div class="field-full" id="presetRankWrapper" style="display:none;">
         <label>目指すランクを選択</label>
         <select id="presetRankSelect">
           <option value="">-- ランクを選択 --</option>
-          <option value="800000">S~SSランク (800,000スコア)</option>
-          <option value="550000">A5ランク (550,000スコア)</option>
-          <option value="450000">A4ランク (450,000スコア)</option>
-          <option value="300000">A2~A3ランク (300,000スコア)</option>
-          <option value="230000">A1ランク (230,000スコア)</option>
-          <option value="100000">B2~B3ランク (100,000スコア)</option>
-          <option value="70000">B1ランク (70,000スコア)</option>
-          <option value="65000">C3ランク (65,000スコア)</option>
-          <option value="32000">C2ランク (32,000スコア)</option>
-          <option value="13000">D~C1ランク (13,000スコア)</option>
         </select>
       </div>
     </div>
@@ -342,7 +333,7 @@
 
   document.getElementById('resetBtn').onclick = ()=>{
     confirmAction(
-      '新しい企画にする',
+      '削除する',
       'イベント設定と、これまでの実績記録を全て削除します。次の企画をまっさらな状態から始められます。この操作は取り消せません。',
       async ()=>{
         state.config = null; state.logs = {};
@@ -379,28 +370,65 @@
   });
 
   // ---------- preset event sync ----------
+  const presetEvents = {
+    beril_coca: {
+      name: '【Beril】べるるコカコーラ',
+      start: '2026-07-07',
+      end: '2026-07-13',
+      ranks: [
+        { score: 800000, label: 'S~SSランク (800,000スコア)' },
+        { score: 550000, label: 'A5ランク (550,000スコア)' },
+        { score: 450000, label: 'A4ランク (450,000スコア)' },
+        { score: 300000, label: 'A2~A3ランク (300,000スコア)' },
+        { score: 230000, label: 'A1ランク (230,000スコア)' },
+        { score: 100000, label: 'B2~B3ランク (100,000スコア)' },
+        { score: 70000, label: 'B1ランク (70,000スコア)' },
+        { score: 65000, label: 'C3ランク (65,000スコア)' },
+        { score: 32000, label: 'C2ランク (32,000スコア)' },
+        { score: 13000, label: 'D~C1ランク (13,000スコア)' },
+      ],
+    },
+    eki_koukoku: {
+      name: '駅広告掲載権獲得イベント2026',
+      start: '2026-07-21',
+      end: '2026-07-27',
+      ranks: [
+        { score: 800000, label: 'S~SSランクの部 (800,000スコア)' },
+        { score: 500000, label: 'A4~A5ランクの部 (500,000スコア)' },
+        { score: 300000, label: 'A1~A3ランクの部 (300,000スコア)' },
+        { score: 100000, label: 'D~B3ランクの部 (100,000スコア)' },
+      ],
+    },
+  };
+
   document.getElementById('presetEventSelect').addEventListener('change', (e)=>{
     const wrapper = document.getElementById('presetRankWrapper');
-    if(e.target.value === 'beril_coca'){
+    const rankSelect = document.getElementById('presetRankSelect');
+    const preset = presetEvents[e.target.value];
+    if(preset){
+      rankSelect.innerHTML = '<option value="">-- ランクを選択 --</option>' +
+        preset.ranks.map(r => `<option value="${r.score}">${r.label}</option>`).join('');
       wrapper.style.display = 'block';
     } else {
       wrapper.style.display = 'none';
-      document.getElementById('presetRankSelect').value = '';
+      rankSelect.innerHTML = '<option value="">-- ランクを選択 --</option>';
     }
   });
 
   document.getElementById('presetRankSelect').addEventListener('change', (e)=>{
     const score = e.target.value;
     if(!score) return;
+    const preset = presetEvents[document.getElementById('presetEventSelect').value];
+    if(!preset) return;
 
-    document.getElementById('eventName').value = '【Beril】べるるコカコーラ';
-    document.getElementById('startDate').value = '2026-07-07';
-    document.getElementById('endDate').value = '2026-07-13';
+    document.getElementById('eventName').value = preset.name;
+    document.getElementById('startDate').value = preset.start;
+    document.getElementById('endDate').value = preset.end;
     document.getElementById('startScore').value = 0;
     document.getElementById('targetScore').value = score;
 
-    // デフォルトで全7日間をONにする
-    const dates = dateRange('2026-07-07', '2026-07-13');
+    // デフォルトで期間中を全てONにする
+    const dates = dateRange(preset.start, preset.end);
     tempStreamDays = {};
     dates.forEach(iso => { tempStreamDays[iso] = true; });
 
